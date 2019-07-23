@@ -1,51 +1,58 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 
-int main(int argc, char* argv[]) {
-    SDL_Window* g_pWindow = 0;
-    SDL_Renderer* g_pRenderer = 0;
-    SDL_Event event;
+int main (int arggc, const char** argv) {
+    int width = 800;
+    int height = 600;
+    int bits_per_pixel = 32;
+    bool windowed = true;
+
+    SDL_Surface* pOGLSurface;
 
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cout<< "Failed to initialize SDL library." << std::endl;
         return -1;
     } 
 
-    g_pWindow = SDL_CreateWindow("Chapter 1: Setting up SDL",
-                                 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                 1440, 900, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    int displays =  SDL_GetNumVideoDisplays();
+    int drivers = SDL_GetNumRenderDrivers();
+    std::cout << "Displays number: " << displays << std::endl;
+    for (int i = 0; i< displays; ++i)
+        std::cout << "\t\t" << SDL_GetDisplayName(i) << std::endl;
 
-    if(g_pWindow == NULL) {
-        std::cout << "Failed to create window" << std::endl;
-        SDL_Quit();
-        return -1;
-    }
+    std::cout << "Drivers number: " << drivers << std::endl;
 
-    g_pRenderer = SDL_CreateRenderer(g_pWindow, -1, 0);
-    if (g_pRenderer == NULL) {
-        SDL_DestroyWindow(g_pWindow);
-        SDL_Quit();
-        return -1;
-    }
+    for(int driver_index = 0; driver_index < drivers; ++driver_index) {
+        SDL_RendererInfo info;
+        SDL_GetRenderDriverInfo(driver_index, &info);
+        std::cout << "-------------------------------------\n";
+        std::cout << "Driver: " << info.name << std::endl;    
+        
+        std::cout << "FLAGS: ";
+        if (info.flags & SDL_RENDERER_SOFTWARE) std::cout << "SDL_RENDERER_SOFTWARE ";
+        if (info.flags & SDL_RENDERER_ACCELERATED) std::cout << "SDL_RENDERER_ACCELERATED ";
+        if (info.flags & SDL_RENDERER_PRESENTVSYNC) std::cout << "SDL_RENDERER_PRESENTVSYNC ";
+        if (info.flags & SDL_RENDERER_TARGETTEXTURE) std::cout << "SDL_RENDERER_TARGETTEXTURE ";
+        std::cout << std::endl;
 
-    std::cout << "Library initialized. Window and Renderer are ready. Rendering..." << std::endl;
-
-    while (1) {
-        SDL_PollEvent(&event);
-        if (event.type == SDL_QUIT) {
-            break;
-        }
-        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-            break;
+        std::cout << "Supported formats: " << std::endl;
+        for(int i = 0; i < info.num_texture_formats; ++i) {
+            std::cout << "\t\t" << SDL_GetPixelFormatName(info.texture_formats[i]) << std::endl;
         }
 
-        SDL_SetRenderDrawColor(g_pRenderer, 255, 255, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(g_pRenderer);
-        SDL_RenderPresent(g_pRenderer);
-    }    
+        std::cout << "Max texture width: " << info.max_texture_width << std::endl;
+        std::cout << "Max texture height: " << info.max_texture_height << std::endl;
+    }
 
-    std::cout << "Finilizing." << std::endl;
-    SDL_DestroyWindow(g_pWindow);
+    SDL_Rect rect;
+    SDL_GetDisplayBounds(0, &rect);
+    std::cout << "Bounds x= " << rect.x << ", ";
+    std::cout << "y= " << rect.y << ", ";
+    std::cout << "w= " << rect.w << ", ";
+    std::cout << "h= " << rect.h << std::endl;
+    //SDLGetVideoInfo
+
+
     SDL_Quit();
     return 0;
 }
